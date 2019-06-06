@@ -61,14 +61,14 @@ function createFeatures(earthquakeData) {
     createMap(earthquakes);
 }
 
-// // Create a variable to hold the layer for the tectonic plates layer
+// Create a variable to hold the layer for the tectonic plates layer
 var plateBoundary = new L.LayerGroup();
 // //Run the function on each point of the array
 d3.json(API_plates, function(geoJson) {
     L.geoJSON(geoJson.features, {
         return: { weight: 2, color: 'magenta' }
     })
-}).addTo(plateBoundary);
+}).addTo(myMap);
 
 function createMap(earthquakes) {
 
@@ -112,14 +112,14 @@ function createMap(earthquakes) {
     // Create overlay object to hold our overlay layer
     var overlayMaps = {
         Earthquakes: earthquakes,
-        //PlateBoundaries: plateBoundary,
+        PlateBoundaries: plateBoundary,
     };
 
     // Create our map, giving it the stellite and earthquakes layers to display on load
     var myMap = L.map("map-id", {
         center: [37.09, -95.71],
         zoom: 4,
-        layers: [lightmap, earthquakes]
+        layers: [lightmap, earthquakes, plateBoundary]
     });
 
     // Create a layer control
