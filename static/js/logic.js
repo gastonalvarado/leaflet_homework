@@ -1,147 +1,154 @@
 // Store our API endpoint inside Url for earthquake data
-var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson";
+var API_quakes = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson"
+console.log(API_quakes)
+
 // Store in a url the API endpoint for the tectonic plates data
 var API_plates = "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_boundaries.json"
+console.log(API_plates)
 
-function markerSize(mag) {
-    return mag * 30000;
-}
+//Define marker size based on the magnitude of the earthquake
+function markerSize(magnitude) {
+    return magnitude * 4;
+};
 
-function markerColor(mag) {
-    if (mag <= 1) {
-        return "#ADFF2F";
-    } else if (mag <= 2) {
-        return "#9ACD32";
-    } else if (mag <= 3) {
-        return "#FFFF00";
-    } else if (mag <= 4) {
-        return "#ffd700";
-    } else if (mag <= 5) {
-        return "#FFA500";
-    } else {
-        return "#FF0000";
-    };
-}
+//Create the layer group for earthquakes
+var earthquakes = new L.LayerGroup();
 
-// Perform a GET request to the query URL
-d3.json(queryUrl, function(data) {
-    // Once we get a response, send the data.features object to the createFeatures function
-    createFeatures(data.features);
-});
+//Parse each data point and assign a marker
+d3.json(API_quakes, function(geoJson) {
+    L.geoJSON(geoJson.features, {
+        pointToLayer: function(geoJsonPoint, latlng) {
+            return L.circleMarker(latlng, { radius: markerSize(geoJsonPoint.properties.mag) });
+        },
+        //Assign style to each marker
+        style: function(geoJsonFeature) {
+            return {
+                fillColor: Color(geoJsonFeature.properties.mag),
+                fillOpacity: 0.7,
+                weight: 0.1,
+                color: 'black'
 
-function createFeatures(earthquakeData) {
-
-    // Create a GeoJSON layer containing the features array on the earthquakeData object
-    // Run the onEachFeature function once for each piece of data in the array
-    var earthquakes = L.geoJSON(earthquakeData, {
+            }
+        },
+        //Define the content of each label in the popup
         onEachFeature: function(feature, layer) {
-            //});
-
-            // Define a function we want to run once for each feature in the features array
-            // Give each feature a popup describing the place and time of the earthquake
-            //function onEachFeature(feature, layer) {
             layer.bindPopup("<h3>" + feature.properties.place +
                 "</h3><hr><p>" + "Date" + ":" + new Date(feature.properties.time) + "</p>" +
                 "</h3><p>" + "Magnitude" + ":" + feature.properties.felt + "</p>" +
                 "</h3><p>" + "Felt" + ":" + feature.properties.felt + "</p>" +
                 "</h3><p>" + "Alert" + ":" + feature.properties.alert + "</p>")
-        },
-        pointToLayer: function(feature, latlng) {
-            return new L.circle(latlng, {
-                radius: markerSize(feature.properties.mag),
-                fillColor: markerColor(feature.properties.mag),
-                fillOpacity: 1,
-                stroke: false,
-            })
         }
-    });
-
-
-    // Sending our earthquakes layer to the createMap function
+    }).addTo(earthquakes);
     createMap(earthquakes);
-}
+});
 
-// Create a variable to hold the layer for the tectonic plates layer
+//Create the layer group for tectonic plates 
 var plateBoundary = new L.LayerGroup();
-// //Run the function on each point of the array
+
+//Parse each data point 
 d3.json(API_plates, function(geoJson) {
     L.geoJSON(geoJson.features, {
-        return: { weight: 2, color: 'magenta' }
-    })
-}).addTo(myMap);
+        style: function(geoJsonFeature) {
+            return {
+                weight: 2,
+                color: 'blue'
+            }
+        },
+    }).addTo(plateBoundary);
+})
 
-function createMap(earthquakes) {
+//Define marker color based on the magnitude of the earthquake
+function Color(magnitude) {
+    if (magnitude > 5) {
+        return 'red'
+    } else if (magnitude > 4) {
+        return 'darkorange'
+    } else if (magnitude > 3) {
+        return 'tan'
+    } else if (magnitude > 2) {
+        return 'yellow'
+    } else if (magnitude > 1) {
+        return 'darkgreen'
+    } else {
+        return 'lightgreen'
+    }
+};
 
-    // Define satellite, light, high-contrast, and outdoor layers
-    var satellite = L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
-        attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
-        maxZoom: 18,
-        id: "mapbox.satellite",
-        accessToken: API_KEY
-    });
+//Create function to build map
+function createMap() {
 
+    //Create each map layer
     var highContrastMap = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
         attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
         maxZoom: 18,
         id: 'mapbox.high-contrast',
-        accessToken: API_KEY
+        accessToken: 'pk.eyJ1Ijoib2xhd3JlbmNlNzk5IiwiYSI6ImNqZXZvcTBmdDBuY3oycXFqZThzbjc5djYifQ.-ChNrBxEIvInNJWiHX5pXg'
     });
 
-    var lightmap = L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
-        attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
+    var outdoors = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+        attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
         maxZoom: 18,
-        id: "mapbox.light",
-        accessToken: API_KEY
+        id: 'mapbox.outdoors',
+        accessToken: 'pk.eyJ1Ijoib2xhd3JlbmNlNzk5IiwiYSI6ImNqZXZvcTBmdDBuY3oycXFqZThzbjc5djYifQ.-ChNrBxEIvInNJWiHX5pXg'
     });
 
-    var outdoors = L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
-        attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
+    var lightMap = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+        attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
         maxZoom: 18,
-        id: "mapbox.outdoors",
-        accessToken: API_KEY
+        id: 'mapbox.light',
+        accessToken: 'pk.eyJ1Ijoib2xhd3JlbmNlNzk5IiwiYSI6ImNqZXZvcTBmdDBuY3oycXFqZThzbjc5djYifQ.-ChNrBxEIvInNJWiHX5pXg'
     });
 
-    // Define a baseMaps object to hold our base layers
-    var baseMaps = {
-        "Satellite Map": satellite,
-        "Light Map": lightmap,
-        "Outdoors": outdoors,
+
+    var satellite = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+        attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
+        maxZoom: 18,
+        id: 'mapbox.satellite',
+        accessToken: 'pk.eyJ1Ijoib2xhd3JlbmNlNzk5IiwiYSI6ImNqZXZvcTBmdDBuY3oycXFqZThzbjc5djYifQ.-ChNrBxEIvInNJWiHX5pXg'
+    });
+
+    //Set up map base layers
+    var baseLayers = {
         "High Contrast": highContrastMap,
+        "Outdoors": outdoors,
+        "Light": lightMap,
+        "Satellite": satellite
+    };
+    // Set up overlays for maps
+    var overlays = {
+        "Earthquakes": earthquakes,
+        "Plate Boundaries": plateBoundary,
     };
 
-    // Create overlay object to hold our overlay layer
-    var overlayMaps = {
-        Earthquakes: earthquakes,
-        PlateBoundaries: plateBoundary,
-    };
-
-    // Create our map, giving it the stellite and earthquakes layers to display on load
-    var myMap = L.map("map-id", {
-        center: [37.09, -95.71],
-        zoom: 4,
-        layers: [lightmap, earthquakes, plateBoundary]
+    //Create map with all options
+    var mymap = L.map('map-id', {
+        center: [40, -99],
+        zoom: 4.3,
+        layers: [outdoors, earthquakes, plateBoundary]
     });
 
-    // Create a layer control
-    // Pass in our baseMaps and overlayMaps
-    // Add the layer control to the map
-    L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(myMap);
+    //Add controls for the map
+    L.control.layers(baseLayers, overlays, { collapsed: false }).addTo(mymap);
 
+    //Add legends and add to map
     var legend = L.control({ position: 'bottomleft' });
 
-    legend.onAdd = function() {
+    legend.onAdd = function(map) {
 
         var div = L.DomUtil.create('div', 'info legend'),
-            magnitudes = [0, 1, 2, 3, 4, 5];
+            magnitude = [0, 1, 2, 3, 4, 5],
+            labels = [];
 
-        for (var i = 0; i < magnitudes.length; i++) {
+        div.innerHTML += "<h4 style='margin:4px'>Magnitude</h4>"
+
+        //Loop through data to assign color based on magnitude of earthquake
+        for (var i = 0; i < magnitude.length; i++) {
             div.innerHTML +=
-                '<i style="background:' + markerColor(magnitudes[i] + 1) + '"></i> ' +
-                +magnitudes[i] + (magnitudes[i + 1] ? ' - ' + magnitudes[i + 1] + '<br>' : ' + ');
+                '<i style="background:' + Color(magnitude[i] + 1) + '"></i> ' +
+                magnitude[i] + (magnitude[i + 1] ? '&ndash;' + magnitude[i + 1] + '<br>' : '+');
         }
 
         return div;
     };
-
-    legend.addTo(myMap);
+    legend.addTo(mymap);
 }
