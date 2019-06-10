@@ -1,5 +1,5 @@
 // Store our API endpoint inside Url for earthquake data
-var API_quakes = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson"
+var API_quakes = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson"
 //console.log(API_quakes)
 
 // Store in a url the API endpoint for the tectonic plates data
